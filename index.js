@@ -227,9 +227,9 @@ const vueTouchEvents = {
 
                 if (typeof binding.value === 'function') {
                     if (param) {
-                        binding.value(param, e);
+                        binding.value(param, e, eventType);
                     } else {
-                        binding.value(e);
+                        binding.value(e, eventType);
                     }
                 }
             }
