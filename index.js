@@ -1,19 +1,19 @@
 /**
- * @version   2.0.1 - see https://github.com/jerrybendy/vue-touch-events
+ * @version   2.0.2 - see https://github.com/jerrybendy/vue-touch-events
  * @author    Jerry Bendy
  * @author    Kris Erickson (additions)
  * Forked from 2.0.0 2019-10-01
  */
 
 function touchX(event) {
-    if(event.type.indexOf("mouse") !== -1){
+    if (event.type.indexOf('mouse') !== -1) {
         return event.clientX;
     }
     return event.touches[0].clientX;
 }
 
 function touchY(event) {
-    if(event.type.indexOf("mouse") !== -1){
+    if (event.type.indexOf('mouse') !== -1) {
         return event.clientY;
     }
     return event.touches[0].clientY;
@@ -29,17 +29,18 @@ const vueTouchEvents = {
             swipeTolerance: 30,
             longTapTimeInterval: 400,
             longPressDuration: 800,
-            touchClass: ''
+            touchClass: '',
+            swipeVelocity: .3
         }, options || {});
 
 
         function touchStartEvent(event) {
-            const $this = this.$$touchObj,
-                isTouchEvent = event.type.indexOf("touch") >= 0,
-                isMouseEvent = event.type.indexOf("mouse") >= 0;
+            const $this = this.$$touchObj;
+            const isTouchEvent = event.type.indexOf('touch') >= 0;
+            const isMouseEvent = event.type.indexOf('mouse') >= 0;
 
             if (isTouchEvent) {
-                $this.lastTouchStartTime = event.timeStamp
+                $this.lastTouchStartTime = event.timeStamp;
             }
 
             if (isMouseEvent && $this.lastTouchStartTime && event.timeStamp - $this.lastTouchStartTime < 350) {
@@ -48,7 +49,7 @@ const vueTouchEvents = {
 
             $this.longPressTimeout = setTimeout(() => {
                 if ($this.touchStarted) {
-                    triggerEvent(event, this, 'longpress')
+                    triggerEvent(event, this, 'longpress');
                 }
             }, options.longPressDuration);
 
@@ -71,7 +72,7 @@ const vueTouchEvents = {
 
             $this.touchStartTime = event.timeStamp;
 
-            triggerEvent(event, this, 'start')
+            triggerEvent(event, this, 'start');
         }
 
         function touchMoveEvent(event) {
@@ -81,29 +82,29 @@ const vueTouchEvents = {
             $this.currentY = touchY(event);
 
             if (!$this.touchMoved) {
-                var tapTolerance = options.tapTolerance;
+                const tapTolerance = options.tapTolerance;
 
                 $this.touchMoved = Math.abs($this.startX - $this.currentX) > tapTolerance ||
                     Math.abs($this.startY - $this.currentY) > tapTolerance;
 
-                if($this.touchMoved){
-                    triggerEvent(event, this, 'moved')
+                if ($this.touchMoved) {
+                    triggerEvent(event, this, 'moved');
                 }
 
             } else if (!$this.swipeOutBounded) {
-                var swipeOutBounded = options.swipeTolerance;
+                const swipeOutBounded = options.swipeTolerance;
 
                 $this.swipeOutBounded = Math.abs($this.startX - $this.currentX) > swipeOutBounded &&
-                    Math.abs($this.startY - $this.currentY) > swipeOutBounded
+                    Math.abs($this.startY - $this.currentY) > swipeOutBounded;
             }
 
-            if($this.touchMoved){
-                triggerEvent(event, this, 'moving')
+            if ($this.touchMoved) {
+                triggerEvent(event, this, 'moving');
             }
         }
 
         function touchCancelEvent() {
-            var $this = this.$$touchObj;
+            const $this = this.$$touchObj;
 
             removeTouchClass(this);
 
@@ -112,20 +113,20 @@ const vueTouchEvents = {
                 clearTimeout($this.longPressTimeout);
                 $this.longPressTimeout = 0;
             }
-            $this.startX = $this.startY = 0
+            $this.startX = $this.startY = 0;
         }
 
         function touchEndEvent(event) {
-            var $this = this.$$touchObj,
-                isTouchEvent = event.type.indexOf("touch") >= 0,
-                isMouseEvent = event.type.indexOf("mouse") >= 0;
+            const $this = this.$$touchObj;
+                const isTouchEvent = event.type.indexOf('touch') >= 0;
+                const isMouseEvent = event.type.indexOf('mouse') >= 0;
 
             if (isTouchEvent) {
-                $this.lastTouchEndTime = event.timeStamp
+                $this.lastTouchEndTime = event.timeStamp;
             }
 
             if (isMouseEvent && $this.lastTouchEndTime && event.timeStamp - $this.lastTouchEndTime < 350) {
-                return
+                return;
             }
 
             $this.touchStarted = false;
@@ -143,53 +144,73 @@ const vueTouchEvents = {
                 // detect if this is a longTap event or not
                 if ($this.callbacks.longtap && event.timeStamp - $this.touchStartTime > options.longTapTimeInterval) {
                     event.preventDefault();
-                    triggerEvent(event, this, 'longtap')
+                    triggerEvent(event, this, 'longtap');
 
                 } else {
                     // emit tap event
-                    triggerEvent(event, this, 'tap')
+                    triggerEvent(event, this, 'tap');
                 }
 
             } else if (!$this.swipeOutBounded) {
-                var swipeOutBounded = options.swipeTolerance, direction;
+                const swipeOutBounded = options.swipeTolerance;
+                let direction;
+                const deltaX = Math.abs($this.startX - $this.currentX);
+                const deltaY = Math.abs($this.startY - $this.currentY);
+                let isXDirection = true;
 
-                if (Math.abs($this.startX - $this.currentX) < swipeOutBounded) {
-                    direction = $this.startY > $this.currentY ? "top" : "bottom"
+                if (deltaX < swipeOutBounded) {
+                    if (deltaY >= swipeOutBounded) {
+                        direction = $this.startY > $this.currentY ? 'top' : 'bottom';
+                        isXDirection = false;
+                    }
 
                 } else {
-                    direction = $this.startX > $this.currentX ? "left" : "right"
+                    direction = $this.startX > $this.currentX ? 'left' : 'right';
                 }
 
-                // Only emit the specified event when it has modifiers
-                if ($this.callbacks['swipe.' + direction]) {
-                    triggerEvent(event, this, 'swipe.' + direction, direction)
+                if (direction) {
+                    const velocity = getVelocity(event.timeStamp-$this.touchStartTime, deltaX, deltaY);
+                    const checkVelocity = isXDirection ? velocity.x : velocity.y;
+                    const eventType = checkVelocity > options.swipeVelocity ? 'swipe' : 'pan';
 
-                } else {
-                    // Emit a common event when it has no any modifier
-                    triggerEvent(event, this, 'swipe', direction)
+                    // Only emit the specified event when it has modifiers
+                    if ($this.callbacks[eventType + '.' + direction]) {
+                        triggerEvent(event, this,eventType + '.' + direction, direction);
+
+                    } else {
+                        // Emit a common event when it has no any modifier
+                        triggerEvent(event, this,eventType, direction);
+                    }
                 }
             }
+        }
+
+        function getVelocity(deltaTime, x, y) {
+            return {
+                x: x / deltaTime || 0,
+                y: y / deltaTime || 0
+            };
         }
 
         function mouseEnterEvent() {
-            addTouchClass(this)
+            addTouchClass(this);
         }
 
         function mouseLeaveEvent() {
-            removeTouchClass(this)
+            removeTouchClass(this);
         }
 
         function triggerEvent(e, $el, eventType, param) {
-            var $this = $el.$$touchObj;
+            const $this = $el.$$touchObj;
 
             // get the callback list
-            var callbacks = $this.callbacks[eventType] || [];
+            const callbacks = $this.callbacks[eventType] || [];
             if (callbacks.length === 0) {
-                return null
+                return null;
             }
 
-            for (var i = 0; i < callbacks.length; i++) {
-                var binding = callbacks[i];
+            for (let i = 0; i < callbacks.length; i++) {
+                const binding = callbacks[i];
 
                 if (binding.modifiers.stop) {
                     e.stopPropagation();
@@ -201,27 +222,27 @@ const vueTouchEvents = {
 
                 // handle `self` modifier`
                 if (binding.modifiers.self && e.target !== e.currentTarget) {
-                    continue
+                    continue;
                 }
 
                 if (typeof binding.value === 'function') {
                     if (param) {
-                        binding.value(param, e)
+                        binding.value(param, e);
                     } else {
-                        binding.value(e)
+                        binding.value(e);
                     }
                 }
             }
         }
 
         function addTouchClass($el) {
-            var className = $el.$$touchClass || options.touchClass;
-            className && $el.classList.add(className)
+            const className = $el.$$touchClass || options.touchClass;
+            className && $el.classList.add(className);
         }
 
         function removeTouchClass($el) {
-            var className = $el.$$touchClass || options.touchClass;
-            className && $el.classList.remove(className)
+            const className = $el.$$touchClass || options.touchClass;
+            className && $el.classList.remove(className);
         }
 
         Vue.directive('touch', {
@@ -237,32 +258,32 @@ const vueTouchEvents = {
 
 
                 // register callback
-                var eventType = binding.arg || 'tap';
+                const eventType = binding.arg || 'tap';
                 switch (eventType) {
                     case 'swipe':
-                        var _m = binding.modifiers;
-                        if (_m.left || _m.right || _m.top || _m.bottom) {
-                            for (var i in binding.modifiers) {
+                    case 'pan':
+                        if (binding.modifiers.left || binding.modifiers.right || binding.modifiers.top || binding.modifiers.bottom) {
+                            for (const i in binding.modifiers) {
                                 if (binding.modifiers.hasOwnProperty(i) && ['left', 'right', 'top', 'bottom'].indexOf(i) >= 0) {
-                                    const _e = 'swipe.' + i;
+                                    const _e = eventType + '.' + i;
                                     $el.$$touchObj.callbacks[_e] = $el.$$touchObj.callbacks[_e] || [];
-                                    $el.$$touchObj.callbacks[_e].push(binding)
+                                    $el.$$touchObj.callbacks[_e].push(binding);
                                 }
                             }
                         } else {
                             $el.$$touchObj.callbacks.swipe = $el.$$touchObj.callbacks.swipe || [];
-                            $el.$$touchObj.callbacks.swipe.push(binding)
+                            $el.$$touchObj.callbacks.swipe.push(binding);
                         }
                         break;
 
                     default:
                         $el.$$touchObj.callbacks[eventType] = $el.$$touchObj.callbacks[eventType] || [];
-                        $el.$$touchObj.callbacks[eventType].push(binding)
+                        $el.$$touchObj.callbacks[eventType].push(binding);
                 }
 
                 // prevent bind twice
                 if ($el.$$touchObj.hasBindTouchEvents) {
-                    return
+                    return;
                 }
 
                 $el.addEventListener('touchstart', touchStartEvent, {passive: true});
@@ -277,7 +298,7 @@ const vueTouchEvents = {
                 $el.addEventListener('mouseleave', mouseLeaveEvent);
 
                 // set bind mark to true
-                $el.$$touchObj.hasBindTouchEvents = true
+                $el.$$touchObj.hasBindTouchEvents = true;
             },
 
             unbind: function ($el) {
@@ -299,12 +320,12 @@ const vueTouchEvents = {
 
         Vue.directive('touch-class', {
             bind: function ($el, binding) {
-                $el.$$touchClass = binding.value
+                $el.$$touchClass = binding.value;
             },
             unbind: function ($el) {
-                delete $el.$$touchClass
+                delete $el.$$touchClass;
             }
-        })
+        });
     }
 };
 
@@ -312,14 +333,16 @@ const vueTouchEvents = {
 /*
  * Exports
  */
-if (typeof module === 'object') {
-    module.exports = vueTouchEvents
+if (typeof module === 'object' && module.exports) {
+    module.exports = vueTouchEvents;
 
 } else if (typeof define === 'function' && define.amd) {
     define([], function () {
-        return vueTouchEvents
-    })
+        return vueTouchEvents;
+    });
 } else if (window.Vue) {
     window.vueTouchEvents = vueTouchEvents;
-    Vue.use(vueTouchEvents)
+    Vue.use(vueTouchEvents);
+} else {
+    window.vueTouchEvents = vueTouchEvents;
 }
