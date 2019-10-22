@@ -1,4 +1,4 @@
-# vue-touch-events  [![](https://img.shields.io/npm/v/vue2-touch-events.svg)](https://www.npmjs.com/package/vue2-touch-events)
+# vue-touch-events  
 Enable tap / swipe events for VueJS 2.x
 
 > Note: This is for **Vue 2.x** only.
@@ -6,26 +6,18 @@ Enable tap / swipe events for VueJS 2.x
 Supports:
 
 * `tap` for tap the screen or click the mouse
-* `longtap` for long tap
-* `swipe` for swipe your finger or mouse in a direction (left/top/right/bottom)
+* `longtap` for long tap (does not fire until touchend)
+* `longpress` for long press (fires when the duration is reached)
+* `swipe` for swipe your finger or mouse in a direction (left/top/right/bottom).  Requires velocity
 * `start` for start tap or mouse down
 * `end` for tap end or mouse up
 * `moving` for moving finger or mouse
+* `pan` for slower swipes (left/top/right/bottom)
 
-
-## Install
-
-To install with npm or yarn, use
-
-```shell
-npm i -S vue2-touch-events
-
-// or
-
-yarn add vue2-touch-events
-```
 
 ## Usage
+
+**Warning: does not play nice with vue-cli and webkit, will not import correctly**
 
 ```js
 import Vue from 'vue'
@@ -79,7 +71,9 @@ Vue.use(Vue2TouchEvents, {
     touchClass: '',
     tapTolerance: 10,
     swipeTolerance: 30,
-    longTapTimeInterval: 400
+    longTapTimeInterval: 400,
+    longPressDuration: 800,
+    swipeVelocity: .3
 })
 ```
 
@@ -90,6 +84,8 @@ Vue.use(Vue2TouchEvents, {
 * `tapTolerance` default `10`. The tolerance to ensure whether the tap event effective or not.
 * `swipeTolerance` default `30`. The tolerance to ensure whether the swipe event effective or not.
 * `longTapTimeInterval` default `400` in millsecond. The minimum time interval to detect whether long tap event effective or not.
+* `longPressDuration` default `800` in millsecond. The minimum time interval to detect whether long press event is fired.
+* `swipeVelocity` default `.3` velocity required to fire a swipe rather than a pan event (less allows slower swipes).
 
 ### Directives
 
