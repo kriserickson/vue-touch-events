@@ -180,7 +180,7 @@ export default {
 
 ## Change History
 
-[Look at here](https://github.com/jerrybendy/vue-touch-events/releases)
+[Look at here](https://github.com/kriserickson/vue-touch-events/releases)
 
 
 ## LICENSE
